@@ -17,7 +17,7 @@ commands.help = function(x) // feature complete
 	end while
 	print ""
 end function
-commands.man = function(params) // feature complete
+commands.man = function(params) // almost feature complete
     // command: man
     if params.len != 1 or params[0] == "-h" or params[0] == "--help" then
         print "Usage: man [command]"
@@ -30,10 +30,10 @@ commands.man = function(params) // feature complete
     if info == (command+"_usage").upper then return error("man: manual entry for "+command+" not found")
     print(info)
 end function
-commands.clear = function(x) // feature complete
+commands.clear = function(x) // final
 	clear_screen
 end function
-commands.echo = function(params) // feature complete
+commands.echo = function(params) // final
     params = join(params, " ")
     print params
 end function
@@ -146,7 +146,7 @@ end function
 commands.pwd = function(params) // final
     print fp
 end function
-commands.ifconfig = function(params) // testing
+commands.ifconfig = function(params) // final
     // command: ifconfig
     if params.len != 0 and (params.len != 4 or params[0] == "-h" or params[0] == "--help") then return self.man(["ifconfig"])
     computer = c
@@ -234,9 +234,9 @@ commands.iwlist = function(params) // testing
     end for
     print(format_columns(info))
 end function
-commands.cat = function(params) // TODO: fix prints and errors
+commands.cat = function(params) // final
     // command: cat
-    if params.len != 1 or params[0] == "-h" or params[0] == "--help" then return error("cat_usage")
+    if params.len != 1 or params[0] == "-h" or params[0] == "--help" then return self.man(["cat"])
     pathFile = params[0]
     file = c.File(pathFile)
     if file == null then return error("cat: file not found: "+pathFile)
@@ -244,13 +244,13 @@ commands.cat = function(params) // TODO: fix prints and errors
     if not file.has_permission("r") then return error("cat: permission denied")
     print(file.get_content)
 end function
-commands.rm = function(params) // TODO: fix prints and errors
+commands.rm = function(params) // final
     // command: rm
-    if params.len < 1 or params.len > 2 or params[0] == "-h" or params[0] == "--help" then return error("rm_usage")
+    if params.len < 1 or params.len > 2 or params[0] == "-h" or params[0] == "--help" then return self.man(["rm"])
     pathFile = params[0]
     isRecursive = 0
     if params[0] == "-r" then
-    	if params.len == 1 then return error("rm_usage")
+    	if params.len == 1 then return self.man(["rm"])
     	isRecursive = 1
     	pathFile = params[1]
     end if
@@ -264,7 +264,7 @@ commands.rm = function(params) // TODO: fix prints and errors
     	if output.len > 0 then error(output)
     end if
 end function
-commands.mv = function(params) // TODO: fix prints and errors
+commands.mv = function(params) // final
     // command: mv
     if params.len != 2 then
     	self.man(["mv"])
@@ -317,7 +317,7 @@ commands.mv = function(params) // TODO: fix prints and errors
     	end if
     end if
 end function
-commands.cp = function(params) // TODO: fix prints and errors
+commands.cp = function(params) // final
     // command: cp
     if params.len != 2 or params[0] == "-h" or params[0] == "--help" then return self.man(["cp"])
     origFile = params[0]
@@ -360,24 +360,46 @@ commands.cp = function(params) // TODO: fix prints and errors
     	end if
     end if
 end function
-commands.ssh = function(params) // TODO: add privacy-ssh
-    error("ssh: not implemented yet")
+commands.ssh = function(params) // final
+    usage = function()
+        print("Usage: ssh [(opt) port]");
+    end function
+    
+    print("Privacy SSH for streaming")
+    print("By aldusbumdlebore")
+    
+    if params.len == 0 then port = 22
+    if params.len >= 2 then exit(usage)
+    if params.len == 1 then port = params[0].to_int
+    if typeof(port) != "number" then exit(usage)
+    
+    user = user_input("Username: ")
+    ip = user_input("IP address: ", true)
+    password = user_input("Password: " + char(0))
+    print("")
+    print("Connecting.....")
+    shell = get_shell.connect_service(ip, port, user, password, "ssh")
+    if typeof(shell) == "string" then exit(shell)
+    if shell then
+        shell.start_terminal
+    else
+        print("connection failed")
+    end if
 end function
-commands.ftp = function(params) // TODO: remove this command??
+commands.ftp = function(params) // final
     //Command: ftp
-    if params.len < 2 or params.len > 3 then return error("ftp_usage")
+    if params.len < 2 or params.len > 3 then return self.man(["ftp"])
     credentials = params[0].split("@")
     user = credentials[0]
     password = credentials[1]
     port = 21
-    // params is a list of strings, so you have to convert it to integer, which is what connect_service accepts.
     if params.len == 3 then port = params[2].to_int
     if typeof(port) != "number" then return error("Invalid port: " + port)
     print("Connecting...")
     ftp_shell = s.connect_service(params[1], port, user, password, "ftp")
     if ftp_shell then ftp_shell.start_terminal
 end function
-commands.mkdir = function(params) // TODO: replace print with error
+commands.mkdir = function(params) // final
     // command: mkdir
     if params.len != 1 or params[0] == "-h" or params[0] == "--help" then
     	self.man(["mkdir"])
@@ -405,7 +427,7 @@ commands.mkdir = function(params) // TODO: replace print with error
     	end if
     end if
 end function
-commands.rmdir = function(params) // TODO: fix prints and errors
+commands.rmdir = function(params) // final
     // has no man page
     if params.len < 1 or not params[0].trim then return self.man(["rmdir"])
     path = params[0].trim
@@ -416,9 +438,9 @@ commands.rmdir = function(params) // TODO: fix prints and errors
     if f.get_files.len >= 1 or f.get_folders.len >= 1 then return error("rmdir: failed to remove '" + path + "': directory not empty") // fix this
     fd = f.delete
     if fd.trim.len == 0 then return
-    return error("rmdir: failed to remove '" + path + "': " + fd.trim) // fix this
+    return error("rmdir: failed to remove '" + path + "': " + fd.trim)
 end function
-commands.chmod = function(params) // TODO: fix prints and errors
+commands.chmod = function(params) // final
     // command: chmod
     if params.len < 2 or (params.len == 3 and params[0] != "-R") then return self.man(["chmod"])
     permissions = params[0]
@@ -430,11 +452,11 @@ commands.chmod = function(params) // TODO: fix prints and errors
     	isRecursive = 1
     end if
     file = c.File(pathFile)
-    if file == null then return error("chmod: can't find " + pathFile) // fix this
+    if file == null then return error("chmod: can't find " + pathFile)
     output = file.chmod(permissions, isRecursive)
-    if output then error(output) // fix this ???
+    if output then error(output)
 end function
-commands.whois = function(params) // feature complete
+commands.whois = function(params) // final
     // command: whois
     if params.len != 1 or params[0] == "-h" or params[0] == "--help" then
         return self.man(["whois"])
@@ -443,7 +465,7 @@ commands.whois = function(params) // feature complete
     	print(whois(address))
     end if
 end function
-commands.useradd = function(params) // TODO: fix prints and errors
+commands.useradd = function(params) // final
     // command: useradd
     if params.len != 1 or params[0] == "-h" or params[0] == "--help" then return self.man(["useradd"])
 
@@ -452,10 +474,10 @@ commands.useradd = function(params) // TODO: fix prints and errors
 
     output = c.create_user(params[0], inputPass)
     if output == true then return print("User created OK")
-    if output then error(output) // fix this ??
-    error("Error: the user could not be created.") // fix this ???
+    if output then error(output)
+    error("Error: the user could not be created.")
 end function
-commands.userdel = function(params) // TODO: START HERE
+commands.userdel = function(params) // final
     // command: userdel
     if not params.len or (params.len == 1 and params[0] == "-r") or params[0] == "-h" or params[0] == "--help" then return self.man(["userdel"])
     delete = 0
@@ -468,7 +490,7 @@ commands.userdel = function(params) // TODO: START HERE
     if output then return error(output)
     error("Error: user not deleted.")
 end function
-commands.passwd = function(params) // TODO: fix prints and errors
+commands.passwd = function(params) // final
     // command: passwd
     if params.len != 1 or params[0] == "-h" or params[0] == "--help" then return self.man(["passwd"])
     inputMsg = "Changing password for user " + params[0] +".\nNew password:"
@@ -595,18 +617,18 @@ commands.kill = function(params) // final
     if output then return error(output)
     print("Process " + PID + " not found")
 end function
-commands.ping = function(params) // TODO: fix prints and errors
+commands.ping = function(params) // final
     //Command: ping
-    if params.len != 1 or params[0] == "-h" or params[0] == "--help" then return error("ping_usage")
+    if params.len != 1 or params[0] == "-h" or params[0] == "--help" then return self.man(["ping"])
     result = s.ping(params[0])
     if result then
         if typeof(result) == "string" then
-            print(result) 
+            error(result) 
     	else
     	    print("Ping successful")
     	end if
     else
-    	print("ip unreachable")
+    	error("ip unreachable")
     end if
 end function
 commands.pacman = function(params) // TODO: custom usage and errors
@@ -711,15 +733,15 @@ commands.pacman = function(params) // TODO: custom usage and errors
     	print "pacman usage" // fix this 
     end if
 end function
-commands.whoami = function(params) // TODO: fix prints and errors
+commands.whoami = function(params) // final
     //Command: whoami
     print(active_user)
 end function
-commands.airmon = function(params) // TODO: fix prints and errors
+commands.airmon = function(params) // final
     // command: airmon
     cryptools = include_lib("/lib/crypto.so")
     if not cryptools then return error("Error: Missing crypto library")
-    if params.len > 0 and (params.len != 2 or params[0] == "-h" or params[0] == "--help") then return error("airmon_usage")
+    if params.len > 0 and (params.len != 2 or params[0] == "-h" or params[0] == "--help") then return self.man(["airmon"])
     computer = c
     formatOutput = "Interface Chipset Monitor_Mode\n"
     if params.len == 0 then	return error(format_columns(formatOutput + computer.network_devices))
@@ -731,21 +753,21 @@ commands.airmon = function(params) // TODO: fix prints and errors
     if typeof(output) == "string" then return error(output)
     print(format_columns(formatOutput + computer.network_devices))
 end function
-commands.aireplay = function(params) // TODO: calculate when to stop automatically
+commands.aireplay = function(params) // not suitable for release
     // command: aireplay
     cryptools = include_lib("/lib/crypto.so")
     if not cryptools then return error("Error: Missing crypto library")
-    if params.len != 4 or params[0] == "-h" or params[0] == "--help" or params[0] != "-b" or params[2] != "-e" then return error("aireplay_usage")
+    if params.len != 4 or params[0] == "-h" or params[0] == "--help" or params[0] != "-b" or params[2] != "-e" then return self.man(["aireplay"])
     bssid = params[1]
     essid = params[3]
     result = cryptools.aireplay(bssid, essid)
-    if typeof(result) == "string" then return error(result)
+    if typeof(result) == "string" then return error(result) // is error ??
 end function
-commands.aircrack = function(params) // TODO: fix prints and errors
+commands.aircrack = function(params) // final
     // command: aircrack
     cryptools = include_lib("/lib/crypto.so")
     if not cryptools then return error("Error: Missing crypto library")
-    if params.len != 1 or params[0] == "-h" or params[0] == "--help" then return error("aircrack_usage")
+    if params.len != 1 or params[0] == "-h" or params[0] == "--help" then return self.man(["aircrack"])
     pathFile = params[0]
     file = c.File(pathFile)
     if file == null then return error("aircrack: file not found: "+pathFile)
@@ -755,14 +777,14 @@ commands.aircrack = function(params) // TODO: fix prints and errors
     if key then 
     	print("KEY FOUND! [" + key + "]" )
     else 
-    	print("aircrack: Unable to get the key" )
+    	error("aircrack: Unable to get the key" )
     end if
 end function
 commands.sudo = function(params) // testing
     // command: sudo
     if not params or params[0] == "-h" or params[0] == "--help" then return self.man(["sudo"])
     if params[0] == "-u" and params.len != 2 then return self.man(["sudo"])
-    inputPass = user_input("Password: ", true)
+    inputPass = user_input("Password: " + char(0), true)
     if params[0] == "-u" then
     	shell = get_shell(params[1], inputPass)
     	if not shell then return error("sudo: incorrect username or password")

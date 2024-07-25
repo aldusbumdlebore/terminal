@@ -18,8 +18,7 @@ end if
 // debug = 1 disables security // set in functions, not here
 if not debug then security // security makes you enter a password
 
-// main loop
-while true
+while true // main loop
 	fp = fp
 	fn = c.File(fp).name
 	if au == "root" then
