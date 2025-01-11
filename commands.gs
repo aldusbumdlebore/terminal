@@ -80,7 +80,7 @@ commands.cd = function(params) // feature complete
 		if newdir.indexOf("/") == 0 then
 			return error("cd: " + newdir + " not found")
 		else
-			return error("cd: " + fp+"/"newdir + " not found")
+			return error("cd: " + fp+"/"+newdir + " not found")
 		end if
 	end if
 end function
